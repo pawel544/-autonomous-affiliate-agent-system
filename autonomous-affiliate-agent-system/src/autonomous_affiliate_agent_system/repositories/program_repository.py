@@ -17,3 +17,22 @@ def get_affiliate_program(id_program:int) -> dict:
         return {"error": f"Brak programu o ID {id_program} "}
     program = dict(row)
     return program
+
+@mcp.tool()
+def list_affiliate_programs() -> list[dict]:
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+    DB_PATH = BASE_DIR / 'data' / 'base.db'
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, category, commission_rate, recurring, cookie_duration, final_score"
+                   " FROM program_affiliate")
+    rows = cursor.fetchall()
+    conn.close()
+    if not rows:
+        return {'count': 0,"message" : "Brak programów"}
+    programs = []
+    for row in rows:
+        program = dict(row)
+        programs.append(program)
+    return {"count": len(programs), "programs": programs}
