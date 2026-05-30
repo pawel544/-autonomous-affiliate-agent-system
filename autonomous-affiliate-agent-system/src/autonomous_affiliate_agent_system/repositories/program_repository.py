@@ -70,3 +70,44 @@ def filter_affiliate_programs(id_program:Optional[int]=None, name_program : Opti
         programs.append(program)
     return {"count": len(programs), "programs": programs}
 
+@mcp.tool()
+def update_affiliate_programs(id_program: int,name_program : Optional[str] = None
+                               ,category_program: Optional[str]= None, commission_rate_program: Optional[str] = None,
+                                recurring_program: Optional[bool] = None,cookie_duration_program: Optional[str] = None,
+                                epc_program: Optional[float] = None):
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+    DB_PATH = BASE_DIR / 'data' / 'base.db'
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM program_affiliate WHERE id = ?", (id_program,))
+    row = cursor.fetchone()
+    if row is None:
+        cursor.close()
+        conn.close()
+        return f"No program with ID {id_program}"
+    fields = {}
+    if name_program is not None:
+        fields["name"] = name_program
+    if category_program is not None:
+        fields["category"] = category_program
+    if commission_rate_program is not None:
+        fields["commission_rate"] = commission_rate_program
+    if recurring_program is not None:
+        fields["recurring"] = recurring_program
+    if cookie_duration_program is not None:
+        fields["cookie_duration"] = cookie_duration_program
+    if epc_program is not None:
+        fields["epc"] = epc_program
+    if not fields:
+        cursor.close()
+        conn.close()
+        return "No parameters"
+    set_clouse = ", ".join([f"{fild}=?" for fild in fields.keys()])
+    value= list(fields.values())
+    value.append(id_program)
+    cursor.execute(f"""UPDATE program_affiliate SET {set_clouse} WHERE id = ?""", value)
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return f"The ID{id_program} program has been updated"
+
