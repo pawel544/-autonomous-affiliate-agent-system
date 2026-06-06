@@ -82,8 +82,8 @@ def update_affiliate_programs(id_program: int,name_program : Optional[str] = Non
     cursor.execute("SELECT * FROM program_affiliate WHERE id = ?", (id_program,))
     row = cursor.fetchone()
     if row is None:
-        cursor.close()
         conn.close()
+        cursor.close()
         return f"No program with ID {id_program}"
     fields = {}
     if name_program is not None:
