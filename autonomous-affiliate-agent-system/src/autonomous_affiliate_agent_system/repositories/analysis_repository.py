@@ -2,7 +2,7 @@ import sqlite3
 from pathlib import Path
 from typing import Optional
 from ..services.coring_service import mcp, calculate_final_score, get_opinion_type
-
+from ..agents.affiliate_agents import build_opinion_prompt
 
 @mcp.tool()
 def add_opinie_type(id:int):
@@ -42,3 +42,25 @@ def get_program_analysis(id:int):
     cursor.close()
     conn.close()
     return program
+@mcp.tool()
+def create_ai_opinion(id:int):
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    DB_PATH = BASE_DIR / 'data' / 'base.db'
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""SELECT p.commission_rate ,p_a.name, p_a.opinion_type 
+    FROM program_analysis AS p_a JOIN program_affiliate AS p ON p_a.affiliate_program_id=p.id 
+    WHERE p_a.id = ?""", (id,))
+    row = cursor.fetchone()
+    if row is None:
+        cursor.close()
+        conn.close()
+        return f"No program with ID {id}"
+    prompt = build_opinion_prompt(row['name'], row['commission_rate'], row['opinion_type'] )
+    ai_opin = (prompt)#TU dopisz funkcje wywołania modelu
+    cursor.execute("""UPDATE program_analysis SET ai_opinion=? WHERE id=? """, (ai_opin, id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return f'Opinion generate: {ai_opin}'
