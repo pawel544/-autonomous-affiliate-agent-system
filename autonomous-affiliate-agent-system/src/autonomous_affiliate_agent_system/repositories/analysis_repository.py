@@ -64,3 +64,16 @@ def create_ai_opinion(id:int):
     cursor.close()
     conn.close()
     return f'Opinion generate: {ai_opin}'
+
+@mcp.tool()
+def run_program_analysis_workflow(id:int):
+    program = get_program_analysis(id)
+    if "error" in program:
+        return program["error"]
+    analysis_result = add_opinie_type(id)
+    opinion_type_result = get_program_analysis(id)
+    opinion_result=create_ai_opinion(id)
+    return  {"ID": id,
+             analysis_result : analysis_result,
+             opinion_type_result : opinion_type_result,
+             opinion_result : opinion_result}
