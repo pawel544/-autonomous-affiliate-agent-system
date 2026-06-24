@@ -1,6 +1,6 @@
 import sqlite3
 from pathlib import Path
-
+from ..repositories.program_repository import create_program_analysis
 from mcp.server import FastMCP
 
 mcp= FastMCP(name="DataTools", host="0.0.0.0", port=8080)
@@ -19,6 +19,7 @@ def add_affiliate_program(name: str, category: str,commission_rate: str | None= 
                    (name,category,commission_rate,recurring,cookie_duration,epc))
     conn.commit()
     program_id= cursor.lastrowid
+    create_program_analysis(program_id)
     #TU BĘDZIE WYWOŁANIE PROMPTA WY WYLICZENIA!!
     conn.close()
     return f" Program dodany o numerze {program_id} id"

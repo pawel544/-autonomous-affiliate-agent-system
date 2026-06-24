@@ -3,6 +3,23 @@ from pathlib import Path
 from typing import Optional
 from ..services.coring_service import mcp
 
+
+def create_program_analysis(id):
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+    DB_PATH = BASE_DIR / 'data' / 'base.db'
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM  program_affiliate WHERE id = ?",(id,))
+    row = cursor.fetchone()
+    cursor.execute("INSERT INTO program_analysis (affiliate_program_id), (name) VALUES (?,?)",
+                   (id,row[0],))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return f"program analysis added with ID {id}"
+
+
 @mcp.tool()
 def get_affiliate_program(id_program:int) -> dict:
     BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
@@ -13,6 +30,7 @@ def get_affiliate_program(id_program:int) -> dict:
     cursor.execute("SELECT * FROM program_affiliate WHERE id =?", (id_program,))
 
     row = cursor.fetchone()
+    cursor.close()
     conn.close()
     if row is None:
         return {"error": f"Brak programu o ID {id_program} "}
@@ -29,6 +47,7 @@ def list_affiliate_programs() -> list[dict]:
     cursor.execute("SELECT id, name, category, commission_rate, recurring, cookie_duration, final_score"
                    " FROM program_affiliate")
     rows = cursor.fetchall()
+    cursor.close()
     conn.close()
     if not rows:
         return {'count': 0,"message" : "Brak programów"}
@@ -63,6 +82,7 @@ def filter_affiliate_programs(id_program:Optional[int]=None, name_program : Opti
         parms.append(f"%{category_program}%")
     cursor.execute(query, parms)
     rows = cursor.fetchall()
+    cursor.close()
     conn.close()
     programs = []
     for row in rows:
