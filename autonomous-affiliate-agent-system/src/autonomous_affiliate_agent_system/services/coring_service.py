@@ -21,6 +21,7 @@ def add_affiliate_program(name: str, category: str,commission_rate: str | None= 
     program_id= cursor.lastrowid
     create_program_analysis(program_id)
     #TU BĘDZIE WYWOŁANIE PROMPTA WY WYLICZENIA!!
+    cursor.close()
     conn.close()
     return f" Program dodany o numerze {program_id} id"
 
@@ -37,6 +38,7 @@ def get_opinion_type(id:int) ->str:
         conn.close()
         return f"No program with ID {id}"
     row = cursor.fetchone()
+    cursor.close()
     conn.close()
     if  row is not None:
         final_score=row[0]
@@ -66,5 +68,6 @@ def calculate_final_score( id: int) -> float:
     score= round(score,2)
     cursor.execute("UPDATE program_affiliate SET final_score= ? WHERE id = ? ",(score,id))
     conn.commit()
+    cursor.close()
     conn.close()
     return score
