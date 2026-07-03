@@ -65,6 +65,41 @@ def create_ai_opinion(id:int):
     conn.close()
     return f'Opinion generate: {ai_opin}'
 
+
+def request_analysis_approval(id:int):
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    DB_PATH = BASE_DIR / 'data' / 'base.db'
+    conn = sqlite3.connect(DB_PATH)
+    cursor =conn.cursor()
+    while True:
+        try:
+            sat = int(input("Select 1 to accept, or select 2 to decline: "))
+        except ValueError:
+            print("Please select 1 or 2")
+            continue
+        if sat == 1:
+            stat = "approved"
+            break
+        elif sat == 2:
+            stat = "declined"
+            break
+        else:
+            print("Select 1 to accept, or select 2 to decline")
+    cursor.execute("""UPDATE program_analysis SET status = ? WHERE id = ?""", (stat, id))
+    conn.commit()
+    if cursor.rowcount == 0:
+        cursor.close()
+        conn.close()
+        return f"No analysis with ID {id}"
+    cursor.close()
+    conn.close()
+    if sat == 1:
+        return f"Analysis with ID {id} has been approved"
+    elif sat == 2:
+        return f"Analysis with ID {id} has been declined"
+
+
+
 @mcp.tool()
 def run_program_analysis_workflow(id:int):
     program = get_program_analysis(id)
@@ -74,6 +109,7 @@ def run_program_analysis_workflow(id:int):
     opinion_type_result = get_program_analysis(id)
     opinion_result=create_ai_opinion(id)
     return  {"ID": id,
-             analysis_result : analysis_result,
-             opinion_type_result : opinion_type_result,
-             opinion_result : opinion_result}
+             "analysis_result" : analysis_result,
+             "opinion_type_result" : opinion_type_result,
+             "opinion_result" : opinion_result
+             }
