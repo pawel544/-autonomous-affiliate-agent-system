@@ -99,6 +99,17 @@ def request_analysis_approval(id:int):
         return f"Analysis with ID {id} has been declined"
 
 
+@mcp.tool()
+def request_analysis (id:int):
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    DB_PATH = BASE_DIR / 'data' / 'base.db'
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""UPDATE program_analysis SET status = ? WHERE id = ?""", ("Failure of a person to accept", id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return f"Analysis with ID {id} Failure of a person to accept"
 
 @mcp.tool()
 def run_program_analysis_workflow(id:int):
@@ -107,9 +118,12 @@ def run_program_analysis_workflow(id:int):
         return program["error"]
     analysis_result = add_opinie_type(id)
     opinion_type_result = get_program_analysis(id)
+    status =request_analysis(id)
     opinion_result=create_ai_opinion(id)
+
     return  {"ID": id,
              "analysis_result" : analysis_result,
              "opinion_type_result" : opinion_type_result,
-             "opinion_result" : opinion_result
+             "opinion_result" : opinion_result,
+             "status":status
              }
