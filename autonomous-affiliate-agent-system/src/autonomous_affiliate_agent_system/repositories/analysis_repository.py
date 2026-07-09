@@ -105,11 +105,43 @@ def request_analysis (id:int):
     DB_PATH = BASE_DIR / 'data' / 'base.db'
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("""UPDATE program_analysis SET status = ? WHERE id = ?""", ("Failure of a person to accept", id))
+    cursor.execute("""UPDATE program_analysis SET status = ? WHERE id = ?""", ("human_rejected", id))
     conn.commit()
     cursor.close()
     conn.close()
     return f"Analysis with ID {id} Failure of a person to accept"
+
+@mcp.tool()
+def get_full_analysis_report(id:int):
+    DB_DIR = Path(__file__).resolve().parent.parent
+    DB_PATH = DB_DIR / 'data' / 'base.db'
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""SELECT  p_a.id AS analysis_id,
+            p_a.affiliate_program_id,
+            p_a.opinion_type,
+            p_a.ai_opinion,
+            p_a.status,
+            p.name,
+            p.category,
+            p.commission_rate,
+            p.recurring,
+            p.cookie_duration,
+            p.epc,
+            p.final_score FROM program_analysis AS p_a
+            JOIN program_affiliate AS p ON p_a.affiliate_program_id = p.id
+             WHERE p_a.id = ?""", (id,))
+    row = cursor.fetchone()
+    if row is None:
+        cursor.close()
+        conn.close()
+        return f"No analysis with ID {id}"
+    cursor.close()
+    conn.close()
+    analiz = dict(row)
+    return analiz
+
 
 @mcp.tool()
 def run_program_analysis_workflow(id:int):
@@ -127,3 +159,4 @@ def run_program_analysis_workflow(id:int):
              "opinion_result" : opinion_result,
              "status":status
              }
+

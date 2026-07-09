@@ -11,27 +11,31 @@ def add_link(link):
     cursor = conn.cursor()
     cursor.execute("""INSERT INTO Connection (link) VALUES (?)""", (link,))
     conn.commit()
+    link_id = cursor.lastrowid
     cursor.close()
     conn.close()
-    return "added link"
+    return {"message":"added link",
+            "link_id": link_id,
+            "link": link}
 
 @mcp.tool()
 def show_all_links():
     BASE_DIR = Path(__file__).resolve().parent.parent
     DB_PATH = BASE_DIR / 'data' / "base.db"
     conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM Connection")
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
     if not rows:
-        return {"count": 0 , "message": "No links"}
+        return {"count": 0 , 'links':[] ,"message": "No links"}
     link= []
     for row in rows:
         links = dict(row)
         link.append(links)
-        return {"count": len(link), "links": link}
+    return {"count": len(link), "links": link}
 
 @mcp.tool()
 def update_link(link,id):
@@ -41,9 +45,13 @@ def update_link(link,id):
     cursor = conn.cursor()
     cursor.execute("""UPDATE Connection SET link = ? WHERE id = ?""",(link, id))
     conn.commit()
+    if cursor.rowcount == 0:
+        cursor.close()
+        conn.close()
+        return f"No link with id {id}"
     cursor.close()
     conn.close()
-    return "updated link"
+    return f"updated link with {id}"
 
 @mcp.tool()
 def delete_link(id):
@@ -53,6 +61,27 @@ def delete_link(id):
     cursor = conn.cursor()
     cursor.execute("""DELETE FROM Connection WHERE id = ?""", (id,))
     conn.commit()
+    if cursor.rowcount == 0:
+        cursor.close()
+        conn.close()
+        return f"No link with id {id}"
     cursor.close()
     conn.close()
-    return "deleted link"
+    return f"deleted link with ID {id}"
+@mcp.tool()
+def get_link(id):
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    DB_PATH = BASE_DIR / 'data' / 'base.db'
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""SELECT * FROM Connection WHERE id = ?""", (id,))
+    rows = cursor.fetchone()
+    if rows is None:
+        cursor.close()
+        conn.close()
+        return f"No link with id {id}"
+    link_program = dict(rows)
+    cursor.close()
+    conn.close()
+    return link_program
