@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 from ..services.coring_service import mcp, calculate_final_score, get_opinion_type
 from ..agents.affiliate_agents import build_opinion_prompt
+from .. services.ai_env import ai_env
 
 @mcp.tool()
 def add_opinie_type(id:int):
@@ -58,7 +59,7 @@ def create_ai_opinion(id:int):
         conn.close()
         return f"No program with ID {id}"
     prompt = build_opinion_prompt(row['name'], row['commission_rate'], row['opinion_type'] )
-    ai_opin = (prompt)#TU dopisz funkcje wywołania modelu
+    ai_opin = ai_env(prompt)
     cursor.execute("""UPDATE program_analysis SET ai_opinion=? WHERE id=? """, (ai_opin, id))
     conn.commit()
     cursor.close()
